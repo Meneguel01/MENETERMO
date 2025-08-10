@@ -1,142 +1,555 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo da Palavra do Dia</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TERMO - Palavra do Dia (Turbinado)</title>
+<style>
+  :root{
+    --bg:#121214; --panel:#1f2933; --muted:#9aa0a6;
+    --tile:#2b2f33; --tile-border:#3a3f45;
+    --green:#538d4e; --yellow:#b59f3b; --gray:#3a3a3c;
+    --accent:#8b5cf6;
+    --maxWidth:720px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+  body{
+    background:linear-gradient(180deg,#0f1720 0%, #071027 100%);
+    color:#fff;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:28px 16px;
+  }
 
-        h1 {
-            color: #333;
-        }
+  .app {
+    width:100%;
+    max-width:var(--maxWidth);
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    align-items:center;
+  }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(5, 60px);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+  header{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+  }
+  .title {
+    display:flex; gap:12px; align-items:center;
+  }
+  h1{margin:0;font-size:1.4rem;letter-spacing:1px}
+  small{color:var(--muted); font-size:0.9rem}
 
-        .cell {
-            width: 60px;
-            height: 60px;
-            border: 2px solid #ccc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5em;
-            font-weight: bold;
-            background-color: white;
-            text-transform: uppercase;
-        }
+  .controls{
+    display:flex; gap:8px; align-items:center;
+  }
+  .btn {
+    background:transparent; border:1px solid rgba(255,255,255,0.08);
+    color:#fff; padding:8px 12px;border-radius:8px; cursor:pointer; font-weight:600;
+    backdrop-filter: blur(4px);
+  }
+  .btn.primary{
+    background:linear-gradient(90deg,var(--accent),#5b21b6);
+    border: none;
+    box-shadow: 0 6px 18px rgba(139,92,246,0.18);
+  }
 
-        .cell.correct {
-            background-color: #4caf50;
-            color: white;
-        }
+  main{
+    width:100%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.0));
+    border-radius:12px; padding:18px; border: 1px solid rgba(255,255,255,0.04);
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+  }
 
-        .cell.partial {
-            background-color: orange;
-            color: white;
-        }
+  /* Grid */
+  .board { display:grid; grid-template-rows: repeat(6, 1fr); gap:8px; width:100%; max-width:420px; }
+  .row { display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; justify-items:center; }
+  .tile {
+    width:64px;height:64px; display:flex; align-items:center; justify-content:center;
+    background:var(--tile); border-radius:8px; border:2px solid var(--tile-border);
+    font-weight:700; font-size:1.6rem; text-transform:uppercase; letter-spacing:2px;
+    user-select:none; transform-style:preserve-3d;
+  }
 
-        .cell.wrong {
-            background-color: #ccc;
-            color: white;
-        }
+  /* flip animation */
+  .flip {
+    animation: flip 360ms ease;
+  }
+  @keyframes flip {
+    0%{ transform: rotateX(0deg); }
+    50%{ transform: rotateX(90deg); }
+    100%{ transform: rotateX(0deg); }
+  }
 
-        input {
-            padding: 10px;
-            font-size: 1.2em;
-            text-transform: uppercase;
-            width: 200px;
-            text-align: center;
-        }
+  /* colors applied after reveal */
+  .tile.correct{ background:var(--green); border-color:var(--green); color:#fff; }
+  .tile.present{ background:var(--yellow); border-color:var(--yellow); color:#fff; }
+  .tile.absent{ background:var(--gray); border-color:var(--gray); color:#fff; }
 
-        button {
-            padding: 10px 20px;
-            font-size: 1.2em;
-            margin-top: 10px;
-            cursor: pointer;
-        }
-    </style>
+  /* keyboard */
+  .keyboard {
+    width:100%; max-width:560px; display:flex; flex-direction:column; gap:8px; align-items:center;
+  }
+  .krow { display:flex; gap:8px; justify-content:center; }
+  .key {
+    padding:10px 12px; border-radius:8px; min-width:38px; text-align:center;
+    background:#242729; color:#fff; border:1px solid rgba(255,255,255,0.04); cursor:pointer; font-weight:700;
+    user-select:none;
+  }
+  .key.wide{ min-width:74px; padding-left:14px; padding-right:14px;}
+  .key.correct{ background:var(--green); }
+  .key.present{ background:var(--yellow); color:#111; }
+  .key.absent{ background:var(--gray); color:#111; }
+
+  /* footer / messages */
+  #message { min-height:28px; color:var(--muted); font-weight:600; }
+
+  /* modal like toast */
+  .toast {
+    position:fixed; left:50%; transform:translateX(-50%); bottom:28px;
+    background:rgba(0,0,0,0.6); padding:10px 18px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);
+    color:#fff;
+  }
+
+  /* responsive */
+  @media (max-width:480px){
+    .tile{ width:52px; height:52px; font-size:1.3rem; }
+    .key{ padding:9px 8px; min-width:34px; font-size:0.95rem;}
+    .key.wide{ min-width:64px; }
+  }
+</style>
 </head>
 <body>
+  <div class="app" role="application" aria-label="Jogo TERMO - Palavra do Dia">
+    <header>
+      <div class="title">
+        <h1>TERMO</h1>
+        <div><small>Palavra do Dia</small></div>
+      </div>
 
-    <h1>Palavra do Dia</h1>
-    <div class="grid" id="grid"></div>
+      <div class="controls">
+        <button class="btn" id="btnHelp" title="Como jogar">?</button>
+        <button class="btn" id="btnReset" title="Reiniciar jogo do dia">Reiniciar</button>
+        <button class="btn primary" id="btnShare" title="Compartilhar resultado">Compartilhar</button>
+      </div>
+    </header>
 
-    <input type="text" id="guess" maxlength="5" placeholder="Digite a palavra">
-    <button onclick="checkGuess()">Tentar</button>
+    <main>
+      <div id="dateInfo"><small id="dateText"></small></div>
 
-    <script>
-        const palavras = [
-            "CASAL", "TRENO", "FLORE", "NAVIO", "PEDRA", "LIVRO", "PRATO",
-            "CARRO", "TERRA", "BOLSA", "PLANO", "RUGIR", "FESTA", "NORTE"
-        ];
+      <section class="board" id="board" aria-live="polite" aria-atomic="true"></section>
 
-        // Função para obter a palavra do dia
-        function getPalavraDoDia() {
-            const hoje = new Date();
-            const inicio = new Date(2025, 0, 1); // 1º Jan 2025
-            const diffDias = Math.floor((hoje - inicio) / (1000 * 60 * 60 * 24));
-            return palavras[diffDias % palavras.length];
-        }
+      <div id="message" role="status" aria-live="polite"></div>
 
-        let palavraDoDia = getPalavraDoDia();
-        let tentativas = [];
+      <section class="keyboard" id="keyboard" aria-hidden="false"></section>
+    </main>
 
-        function atualizarGrid() {
-            const grid = document.getElementById("grid");
-            grid.innerHTML = "";
-            tentativas.forEach(tentativa => {
-                for (let i = 0; i < 5; i++) {
-                    const cell = document.createElement("div");
-                    cell.classList.add("cell");
-                    const letra = tentativa[i];
-                    cell.textContent = letra;
+    <div style="width:100%; max-width:720px; text-align:center;">
+      <small style="color:var(--muted)">Jogue usando o teclado físico ou clique no teclado abaixo. Letras em <span style="color:var(--green)">verde</span> estão corretas, em <span style="color:var(--yellow)">laranja</span> existem na palavra, mas em outra posição.</small>
+    </div>
+  </div>
 
-                    if (letra === palavraDoDia[i]) {
-                        cell.classList.add("correct");
-                    } else if (palavraDoDia.includes(letra)) {
-                        cell.classList.add("partial");
-                    } else {
-                        cell.classList.add("wrong");
-                    }
-                    grid.appendChild(cell);
-                }
-            });
-        }
+  <!-- Toast placeholder -->
+  <div id="toast" class="toast" style="display:none"></div>
 
-        function checkGuess() {
-            const guessInput = document.getElementById("guess");
-            const guess = guessInput.value.toUpperCase();
+<script>
+/*
+  TERMO - versão turbinada
+  - Palavra do dia baseada em data (mesma para todos)
+  - Salva progresso no localStorage (por data)
+  - Anima flip, teclado virtual + físico
+  - Tratamento correto de letras repetidas
+  - Compartilhar resultado (emoji grid)
+*/
 
-            if (guess.length !== 5) {
-                alert("A palavra deve ter 5 letras!");
-                return;
-            }
+/* ======= CONFIG ======= */
+const WORD_LENGTH = 5;
+const MAX_ROUNDS = 6;
 
-            tentativas.push(guess);
-            atualizarGrid();
+// Start epoch for deterministic word-of-day rotation
+const START_DATE = new Date(2025,0,1); // 1 Jan 2025 (you can change)
+const STORAGE_PREFIX = 'termo_v1_';    // localStorage key prefix
 
-            if (guess === palavraDoDia) {
-                setTimeout(() => alert("Parabéns! Você acertou a palavra do dia!"), 100);
-            }
+// Word bank - add/remove or internationalize as you like (all 5-letter)
+const WORDS = [
+ "CASAR","FURIA","NAVIO","CAIXA","VINHO","CARRO","SALTO","VASTO","CANTO","LIVRO",
+ "PESCA","TREVO","RISCO","BOMBA","PORTA","MELAO","FESTA","BOLSA","FREIO","MURAL",
+ "PASTA","SOMAR","JOGAR","CLARO","CERTO","VELHO","PLANO","MOLHO","CANTO","BOMBA",
+ "PEDRA","PRATO","LINHA","TERRA","PLANO","RUGIR","NORTE","TRENO","CASAL","MOUSE",
+ "BRISA","FATOR","UNICO","BRINQ","BRADO","GRAÇA".replace('Ç','C').slice(0,5) // avoid special char mismatch
+];
 
-            guessInput.value = "";
-        }
-    </script>
+// Make sure all words are uppercase and 5 letters
+const WORD_BANK = WORDS.map(w => w.toUpperCase()).filter(w => w.length===5);
 
+/* ======= HELPERS ======= */
+
+// compute day index from START_DATE
+function daysSinceStart(date){
+  const msPerDay = 1000*60*60*24;
+  return Math.floor((date - START_DATE) / msPerDay);
+}
+
+// get today's word index deterministically
+function getWordOfTheDay(){
+  const today = new Date();
+  const index = daysSinceStart(new Date(today.getFullYear(), today.getMonth(), today.getDate())) % WORD_BANK.length;
+  return WORD_BANK[index];
+}
+
+function formatDateHuman(d){
+  return d.toLocaleDateString('pt-BR',{weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+}
+
+function showToast(text, ms=2200){
+  const t = document.getElementById('toast');
+  t.textContent = text; t.style.display='block';
+  clearTimeout(t._hid);
+  t._hid = setTimeout(()=> t.style.display='none', ms);
+}
+
+function saveState(key, obj){ localStorage.setItem(key, JSON.stringify(obj)); }
+function loadState(key){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null }catch(e){return null} }
+
+/* ======= GAME STATE ======= */
+
+const TODAY = new Date();
+const DATE_KEY = `${TODAY.getFullYear()}-${TODAY.getMonth()+1}-${TODAY.getDate()}`;
+const STORAGE_KEY = STORAGE_PREFIX + DATE_KEY;
+
+const SECRET = getWordOfTheDay();
+console.log('Palavra do dia (debug):', SECRET);
+
+let state = {
+  attempts: [], // array of strings
+  status: 'playing', // 'playing', 'won', 'lost'
+  revealSteps: [] // internal for animation (not persisted)
+};
+
+// load saved if exists and matches today's key
+const saved = loadState(STORAGE_KEY);
+if(saved && saved.attempts) {
+  state.attempts = saved.attempts.slice(0, MAX_ROUNDS);
+  state.status = saved.status || 'playing';
+}
+
+/* ======= DOM BUILD ======= */
+const boardEl = document.getElementById('board');
+const keyboardEl = document.getElementById('keyboard');
+const messageEl = document.getElementById('message');
+const dateText = document.getElementById('dateText');
+dateText.textContent = formatDateHuman(TODAY);
+
+// build empty board (6 rows x 5 cols)
+function buildBoard(){
+  boardEl.innerHTML='';
+  for(let r=0;r<MAX_ROUNDS;r++){
+    const row = document.createElement('div');
+    row.className='row';
+    for(let c=0;c<WORD_LENGTH;c++){
+      const tile = document.createElement('div');
+      tile.className='tile';
+      tile.setAttribute('data-row', r);
+      tile.setAttribute('data-col', c);
+      tile.textContent = '';
+      row.appendChild(tile);
+    }
+    boardEl.appendChild(row);
+  }
+}
+
+// keyboard layout
+const KEY_LAYOUT = [
+  ['Q','W','E','R','T','Y','U','I','O','P'],
+  ['A','S','D','F','G','H','J','K','L'],
+  ['ENTER','Z','X','C','V','B','N','M','BACK']
+];
+
+function buildKeyboard(){
+  keyboardEl.innerHTML='';
+  KEY_LAYOUT.forEach(row=>{
+    const rowDiv = document.createElement('div'); rowDiv.className='krow';
+    row.forEach(k=>{
+      const btn = document.createElement('button');
+      btn.className='key';
+      btn.textContent = (k==='BACK'?'⌫':k);
+      if(k==='ENTER' || k==='BACK') btn.classList.add('wide');
+      btn.addEventListener('click', ()=> onKeyPress(k));
+      rowDiv.appendChild(btn);
+    });
+    keyboardEl.appendChild(rowDiv);
+  });
+}
+
+// update keyboard key style with priority: correct > present > absent
+function updateKeyboardState(map){
+  // map: letter -> 'correct'|'present'|'absent'
+  const keys = keyboardEl.querySelectorAll('.key');
+  keys.forEach(k=>{
+    const txt = k.textContent === '⌫' ? 'BACK' : (k.textContent==='ENTER'? 'ENTER' : k.textContent);
+    if(txt==='ENTER' || txt==='BACK') return;
+    const state = map[txt] || '';
+    k.classList.remove('correct','present','absent');
+    if(state) k.classList.add(state);
+  });
+}
+
+/* ======= GAME LOGIC ======= */
+
+// compute colors for a guess considering repeated letters correctly
+// returns array of 'correct'|'present'|'absent'
+function evaluateGuess(guess, secret){
+  const result = Array(WORD_LENGTH).fill('absent');
+  const secretLetters = secret.split('');
+  // first pass: correct
+  for(let i=0;i<WORD_LENGTH;i++){
+    if(guess[i] === secretLetters[i]){
+      result[i] = 'correct';
+      secretLetters[i] = null; // consume
+    }
+  }
+  // second pass: present or absent
+  for(let i=0;i<WORD_LENGTH;i++){
+    if(result[i] === 'correct') continue;
+    const idx = secretLetters.indexOf(guess[i]);
+    if(idx !== -1){
+      result[i] = 'present';
+      secretLetters[idx] = null; // consume
+    } else {
+      result[i] = 'absent';
+    }
+  }
+  return result;
+}
+
+// derive keyboard map from all attempts so far (best state per letter)
+function deriveKeyboardMap(attempts){
+  const map = {}; // letter -> best state
+  const rank = { 'absent':0, 'present':1, 'correct':2 };
+  attempts.forEach(a=>{
+    const evals = evaluateGuess(a, SECRET);
+    for(let i=0;i<WORD_LENGTH;i++){
+      const L = a[i];
+      const s = evals[i];
+      if(!map[L] || rank[s] > rank[map[L]]){
+        map[L] = s;
+      }
+    }
+  });
+  return map;
+}
+
+/* ======= RENDER & UI ======= */
+
+function renderBoard(){
+  // fill tiles from state.attempts (revealed)
+  const rows = boardEl.querySelectorAll('.row');
+  // clear
+  rows.forEach(row=>{
+    Array.from(row.children).forEach(tile=>{
+      tile.textContent = '';
+      tile.classList.remove('correct','present','absent','flip');
+    });
+  });
+
+  // show previous revealed attempts immediately (no animation on load)
+  state.attempts.forEach((attempt, rIdx)=>{
+    const evals = evaluateGuess(attempt, SECRET);
+    for(let c=0;c<WORD_LENGTH;c++){
+      const tile = rows[rIdx].children[c];
+      tile.textContent = attempt[c];
+      tile.classList.add(evals[c]);
+    }
+  });
+
+  // if playing, show cursor on next row (empty tiles)
+  const curRow = state.attempts.length;
+  if(state.status === 'playing' && curRow < MAX_ROUNDS){
+    // no explicit cursor UI; user types to fill
+  }
+
+  // update keyboard
+  const km = deriveKeyboardMap(state.attempts);
+  updateKeyboardState(km);
+  // message update
+  if(state.status==='won'){
+    messageEl.textContent = `🎉 Parabéns — você acertou em ${state.attempts.length} tentativa(s)!`;
+  } else if(state.status==='lost'){
+    messageEl.textContent = `😔 Fim de jogo — a palavra era ${SECRET}.`;
+  } else {
+    messageEl.textContent = `Tentativas ${state.attempts.length}/${MAX_ROUNDS}`;
+  }
+}
+
+// animate revealing of last attempt (flip sequence)
+function revealLastAttempt(){
+  const lastIdx = state.attempts.length - 1;
+  if(lastIdx < 0) return;
+  const rows = boardEl.querySelectorAll('.row');
+  const row = rows[lastIdx];
+  const attempt = state.attempts[lastIdx];
+  const evals = evaluateGuess(attempt, SECRET);
+
+  // animate each tile with delay
+  for(let i=0;i<WORD_LENGTH;i++){
+    const tile = row.children[i];
+    // first hide (flip) then apply class at midpoint for color effect
+    setTimeout(()=>{
+      tile.classList.add('flip');
+      // at midpoint of flip, set text and class (simulate the card flip)
+      setTimeout(()=>{
+        tile.textContent = attempt[i];
+        tile.classList.remove('flip'); // reset to allow CSS reflow
+        tile.classList.add(evals[i]);
+      }, 180);
+    }, i * 350);
+  }
+
+  // update keyboard after reveal finished
+  setTimeout(()=>{
+    const km = deriveKeyboardMap(state.attempts);
+    updateKeyboardState(km);
+    // check win/loss after reveal
+    if(attempt === SECRET){
+      state.status = 'won';
+      saveState(STORAGE_KEY, state);
+      renderBoard();
+      setTimeout(()=> showToast('🎉 Você venceu! Parabéns!'), 350);
+    } else if(state.attempts.length >= MAX_ROUNDS){
+      state.status = 'lost';
+      saveState(STORAGE_KEY, state);
+      renderBoard();
+      setTimeout(()=> showToast(`❌ Acabou! Palavra: ${SECRET}`), 350);
+    } else {
+      // still playing
+      saveState(STORAGE_KEY, state);
+      renderBoard();
+    }
+  }, WORD_LENGTH * 350 + 250);
+}
+
+/* ======= INPUT HANDLING ======= */
+
+let currentInput = ''; // current composing guess (string)
+function onKeyPress(key){
+  if(state.status !== 'playing'){ showToast('Jogo encerrado. Reinicie para jogar novamente.'); return; }
+  if(key === 'ENTER'){
+    submitCurrentInput();
+    return;
+  }
+  if(key === 'BACK'){
+    currentInput = currentInput.slice(0, -1);
+    updateCurrentRowVisual();
+    return;
+  }
+  // letter
+  if(typeof key === 'string' && key.length===1 && /^[A-Z]$/.test(key)){
+    if(currentInput.length < WORD_LENGTH){
+      currentInput += key;
+      updateCurrentRowVisual();
+    }
+  }
+}
+
+function submitCurrentInput(){
+  if(currentInput.length !== WORD_LENGTH){
+    showToast('Digite 5 letras antes de enviar.');
+    return;
+  }
+  // (Optional) validate word exists in word bank — we can allow any 5-letter strings, but it's nicer to check
+  if(!WORD_BANK.includes(currentInput)){
+    // optional: allow but warn — here we warn and allow
+    // showToast('Palavra não encontrada na lista (mas será aceita).');
+    // return;
+  }
+
+  // push the attempt for reveal
+  state.attempts.push(currentInput);
+  saveState(STORAGE_KEY, state);
+  // clear current input and animate reveal
+  currentInput = '';
+  updateCurrentRowVisual();
+  revealLastAttempt();
+}
+
+// update the visual of the current composing row (no reveal)
+function updateCurrentRowVisual(){
+  const rows = boardEl.querySelectorAll('.row');
+  const rIdx = state.attempts.length; // composing row index
+  rows.forEach((row, idx)=>{
+    if(idx !== rIdx) return;
+    // clear row
+    Array.from(row.children).forEach((tile, c)=>{
+      tile.classList.remove('correct','present','absent');
+      tile.textContent = currentInput[c] || '';
+    });
+  });
+}
+
+/* keyboard physical */
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ onKeyPress('ENTER'); e.preventDefault(); return; }
+  if(e.key === 'Backspace'){ onKeyPress('BACK'); e.preventDefault(); return; }
+  const k = e.key.toUpperCase();
+  if(/^[A-Z]$/.test(k) && k.length===1){ onKeyPress(k); }
+});
+
+/* ======= UI ACTIONS (buttons) ======= */
+
+document.getElementById('btnHelp').addEventListener('click', ()=>{
+  const help = `Como jogar:
+- A palavra tem ${WORD_LENGTH} letras.
+- Você tem ${MAX_ROUNDS} tentativas.
+- Verde: letra correta no lugar certo.
+- Laranja: letra existe na palavra, mas em outra posição.
+Use o teclado físico ou clique nas teclas.`;
+  alert(help);
+});
+
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  if(!confirm('Reiniciar o jogo do dia? Isso apagará seu progresso atual para hoje.')) return;
+  state = { attempts: [], status: 'playing', revealSteps: [] };
+  saveState(STORAGE_KEY, state);
+  currentInput=''; renderBoard(); updateCurrentRowVisual();
+  showToast('Progresso reiniciado.');
+});
+
+document.getElementById('btnShare').addEventListener('click', async ()=>{
+  // create emoji grid (🟩🟨⬛)
+  if(state.attempts.length === 0){
+    showToast('Sem tentativas para compartilhar ainda.');
+    return;
+  }
+  const lines = state.attempts.map(a=>{
+    const evals = evaluateGuess(a, SECRET);
+    return evals.map(r => r==='correct' ? '🟩' : (r==='present' ? '🟨' : '⬛')).join('');
+  }).join('\n');
+  const title = `TERMO ${DATE_KEY} - ${state.status==='won' ? state.attempts.length + '/' + MAX_ROUNDS : (state.status==='lost'? 'X/'+MAX_ROUNDS : state.attempts.length+'/'+MAX_ROUNDS)}`;
+  const text = `${title}\n${lines}\nJogue você também!`;
+  // copy to clipboard
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast('Resultado copiado para a área de transferência! ✔️');
+  }catch(e){
+    showToast('Não foi possível copiar automaticamente. Aqui está o resultado:');
+    prompt('Copie manualmente:', text);
+  }
+});
+
+/* ======= INIT ======= */
+buildBoard();
+buildKeyboard();
+renderBoard();
+updateCurrentRowVisual();
+
+// if we loaded a saved state where last move wasn't revealed (i.e., saved before reveal),
+// we ensure previous attempts are shown (they already are). If game was saved mid-reveal, it's fine.
+
+</script>
 </body>
 </html>
