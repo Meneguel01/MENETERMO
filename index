@@ -1,185 +1,92 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MENETERMO</title>
-<style>
-    body {
-        background-color: #6a555b;
-        font-family: Arial, sans-serif;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin: 0;
-        padding: 20px;
-    }
-
-    h1 {
-        font-size: 2rem;
-        margin-bottom: 20px;
-    }
-
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(5, 60px);
-        grid-gap: 8px;
-        margin-bottom: 20px;
-    }
-
-    .tile {
-        width: 60px;
-        height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        border-radius: 5px;
-        background-color: #3d3d3d;
-        transition: background-color 0.3s;
-    }
-
-    .correta {
-        background-color: #3aa394; /* Verde */
-    }
-    .posicao-errada {
-        background-color: #d3ad69; /* Amarelo */
-    }
-    .errada {
-        background-color: #2d2d2d; /* Cinza escuro */
-    }
-
-    .keyboard {
-        display: grid;
-        grid-template-columns: repeat(10, 40px);
-        grid-gap: 5px;
-        margin-top: 20px;
-    }
-    .key {
-        background-color: #3d3d3d;
-        padding: 10px;
-        text-align: center;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        color: white;
-        user-select: none;
-    }
-    .key:hover {
-        background-color: #555;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palavra do Dia</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .word {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .definition {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .date {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+    </style>
 </head>
 <body>
-    <h1>TERMO</h1>
+    <div class="container">
+        <h1>📖 Palavra do Dia</h1>
+        <div class="word" id="word"></div>
+        <div class="definition" id="definition"></div>
+        <div class="date" id="date"></div>
+    </div>
 
-    <div id="game"></div>
+    <script>
+        const palavras = [
+            { palavra: "Resiliência", definicao: "Capacidade de se adaptar e se recuperar diante de dificuldades ou mudanças." },
+            { palavra: "Efêmero", definicao: "Que dura pouco tempo, passageiro, transitório." },
+            { palavra: "Procrastinar", definicao: "Adiar ou deixar para depois uma tarefa ou obrigação." },
+            { palavra: "Altruísmo", definicao: "Atitude de ajudar os outros sem esperar nada em troca." },
+            { palavra: "Perspicaz", definicao: "Capaz de perceber e compreender as coisas com clareza e rapidez." },
+            { palavra: "Inócuo", definicao: "Que não causa dano ou prejuízo, inofensivo." },
+            { palavra: "Ímpar", definicao: "Singular, único, extraordinário." }
+        ];
 
-    <div class="keyboard" id="keyboard"></div>
-
-<script>
-const palavraSecreta = "CASAR"; // palavra do dia
-let tentativa = "";
-let linhaAtual = 0;
-const maxLinhas = 6;
-const tamanhoPalavra = 5;
-
-// Criar a grade do jogo
-const gameContainer = document.getElementById("game");
-for (let i = 0; i < maxLinhas; i++) {
-    const row = document.createElement("div");
-    row.classList.add("grid");
-    for (let j = 0; j < tamanhoPalavra; j++) {
-        const tile = document.createElement("div");
-        tile.classList.add("tile");
-        row.appendChild(tile);
-    }
-    gameContainer.appendChild(row);
-}
-
-// Criar teclado virtual
-const teclas = [
-    ..."QWERTYUIOP",
-    ..."ASDFGHJKL",
-    ..."ZXCVBNM", "ENTER", "←"
-];
-const keyboard = document.getElementById("keyboard");
-teclas.forEach(tecla => {
-    const key = document.createElement("div");
-    key.classList.add("key");
-    key.textContent = tecla;
-    key.addEventListener("click", () => processarEntrada(tecla));
-    keyboard.appendChild(key);
-});
-
-// Capturar teclado físico
-document.addEventListener("keydown", (e) => {
-    let letra = e.key.toUpperCase();
-    if (letra === "BACKSPACE") letra = "←";
-    if (letra === "ENTER" || /^[A-Z]$/.test(letra) || letra === "←") {
-        processarEntrada(letra);
-    }
-});
-
-function processarEntrada(tecla) {
-    if (tecla === "ENTER") {
-        if (tentativa.length === tamanhoPalavra) {
-            verificarTentativa();
+        function getWordOfTheDay() {
+            const today = new Date();
+            const dayOfYear = Math.floor(
+                (today - new Date(today.getFullYear(), 0, 0)) / 86400000
+            );
+            return palavras[dayOfYear % palavras.length];
         }
-    } else if (tecla === "←") {
-        tentativa = tentativa.slice(0, -1);
-        atualizarLinha();
-    } else if (/^[A-Z]$/.test(tecla) && tentativa.length < tamanhoPalavra) {
-        tentativa += tecla;
-        atualizarLinha();
-    }
-}
 
-function atualizarLinha() {
-    const row = gameContainer.children[linhaAtual];
-    for (let i = 0; i < tamanhoPalavra; i++) {
-        row.children[i].textContent = tentativa[i] || "";
-    }
-}
+        function exibirPalavra() {
+            const palavraDia = getWordOfTheDay();
+            document.getElementById("word").textContent = palavraDia.palavra;
+            document.getElementById("definition").textContent = palavraDia.definicao;
 
-function verificarTentativa() {
-    const row = gameContainer.children[linhaAtual];
-    let letrasRestantes = palavraSecreta.split("");
-
-    // Primeiro marca as corretas
-    for (let i = 0; i < tamanhoPalavra; i++) {
-        if (tentativa[i] === palavraSecreta[i]) {
-            row.children[i].classList.add("correta");
-            letrasRestantes[i] = null;
+            const hoje = new Date().toLocaleDateString("pt-BR", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            });
+            document.getElementById("date").textContent = hoje;
         }
-    }
 
-    // Depois marca as erradas e posição errada
-    for (let i = 0; i < tamanhoPalavra; i++) {
-        if (!row.children[i].classList.contains("correta")) {
-            if (letrasRestantes.includes(tentativa[i])) {
-                row.children[i].classList.add("posicao-errada");
-                letrasRestantes[letrasRestantes.indexOf(tentativa[i])] = null;
-            } else {
-                row.children[i].classList.add("errada");
-            }
-        }
-    }
-
-    if (tentativa === palavraSecreta) {
-        alert("Parabéns! Você acertou!");
-        return;
-    }
-
-    tentativa = "";
-    linhaAtual++;
-    if (linhaAtual >= maxLinhas) {
-        alert(`Fim de jogo! A palavra era: ${palavraSecreta}`);
-    }
-}
-</script>
+        exibirPalavra();
+    </script>
 </body>
 </html>
