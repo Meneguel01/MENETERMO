@@ -1,92 +1,139 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Palavra do Dia</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #6a11cb, #2575fc);
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 500px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-        }
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 10px;
-        }
-        .word {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin: 15px 0;
-        }
-        .definition {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-        .date {
-            margin-top: 15px;
-            font-size: 0.9rem;
-            opacity: 0.7;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palavra do Dia</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #121213;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        height: 100vh;
+        margin: 0;
+        padding-top: 20px;
+    }
+    h1 {
+        margin-bottom: 20px;
+    }
+    #grid {
+        display: grid;
+        grid-template-columns: repeat(5, 60px);
+        grid-gap: 10px;
+        margin-bottom: 20px;
+    }
+    .cell {
+        width: 60px;
+        height: 60px;
+        border: 2px solid #3a3a3c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        background: #121213;
+        color: white;
+    }
+    .correct {
+        background: #538d4e; /* verde */
+        border-color: #538d4e;
+    }
+    .present {
+        background: #b59f3b; /* laranja */
+        border-color: #b59f3b;
+    }
+    .absent {
+        background: #3a3a3c; /* cinza */
+        border-color: #3a3a3c;
+    }
+    input {
+        width: 150px;
+        padding: 10px;
+        font-size: 1.2rem;
+        text-transform: uppercase;
+        text-align: center;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 1rem;
+        margin-left: 10px;
+        cursor: pointer;
+    }
+    #mensagem {
+        margin-top: 20px;
+        font-size: 1.2rem;
+    }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>📖 Palavra do Dia</h1>
-        <div class="word" id="word"></div>
-        <div class="definition" id="definition"></div>
-        <div class="date" id="date"></div>
-    </div>
 
-    <script>
-        const palavras = [
-            { palavra: "Resiliência", definicao: "Capacidade de se adaptar e se recuperar diante de dificuldades ou mudanças." },
-            { palavra: "Efêmero", definicao: "Que dura pouco tempo, passageiro, transitório." },
-            { palavra: "Procrastinar", definicao: "Adiar ou deixar para depois uma tarefa ou obrigação." },
-            { palavra: "Altruísmo", definicao: "Atitude de ajudar os outros sem esperar nada em troca." },
-            { palavra: "Perspicaz", definicao: "Capaz de perceber e compreender as coisas com clareza e rapidez." },
-            { palavra: "Inócuo", definicao: "Que não causa dano ou prejuízo, inofensivo." },
-            { palavra: "Ímpar", definicao: "Singular, único, extraordinário." }
-        ];
+<h1>Palavra do Dia</h1>
 
-        function getWordOfTheDay() {
-            const today = new Date();
-            const dayOfYear = Math.floor(
-                (today - new Date(today.getFullYear(), 0, 0)) / 86400000
-            );
-            return palavras[dayOfYear % palavras.length];
+<div id="grid"></div>
+
+<div>
+    <input type="text" id="entrada" maxlength="5" autofocus>
+    <button onclick="verificar()">Tentar</button>
+</div>
+
+<div id="mensagem"></div>
+
+<script>
+    const palavras = ["CASAL", "JOGOS", "TREVO", "MOUSE", "LINHA", "CARRO", "BOLA", "PRAIA", "NAVIO"];
+    const data = new Date();
+    const indiceDia = Math.floor(data.getTime() / (1000 * 60 * 60 * 24)) % palavras.length;
+    const palavraDoDia = palavras[indiceDia];
+    
+    const tentativasMax = 6;
+    let tentativaAtual = 0;
+    let grid = document.getElementById("grid");
+
+    for (let i = 0; i < tentativasMax * 5; i++) {
+        let cell = document.createElement("div");
+        cell.classList.add("cell");
+        grid.appendChild(cell);
+    }
+
+    function verificar() {
+        let entrada = document.getElementById("entrada");
+        let palpite = entrada.value.toUpperCase();
+        if (palpite.length !== 5) {
+            alert("Digite uma palavra com 5 letras!");
+            return;
         }
 
-        function exibirPalavra() {
-            const palavraDia = getWordOfTheDay();
-            document.getElementById("word").textContent = palavraDia.palavra;
-            document.getElementById("definition").textContent = palavraDia.definicao;
+        let startIndex = tentativaAtual * 5;
 
-            const hoje = new Date().toLocaleDateString("pt-BR", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric"
-            });
-            document.getElementById("date").textContent = hoje;
+        for (let i = 0; i < 5; i++) {
+            let cell = grid.children[startIndex + i];
+            cell.textContent = palpite[i];
+
+            if (palpite[i] === palavraDoDia[i]) {
+                cell.classList.add("correct");
+            } else if (palavraDoDia.includes(palpite[i])) {
+                cell.classList.add("present");
+            } else {
+                cell.classList.add("absent");
+            }
         }
 
-        exibirPalavra();
-    </script>
+        tentativaAtual++;
+        entrada.value = "";
+
+        if (palpite === palavraDoDia) {
+            document.getElementById("mensagem").textContent = "🎉 Você acertou!";
+            document.getElementById("entrada").disabled = true;
+        } else if (tentativaAtual >= tentativasMax) {
+            document.getElementById("mensagem").textContent = `❌ Fim de jogo! A palavra era ${palavraDoDia}`;
+            document.getElementById("entrada").disabled = true;
+        }
+    }
+</script>
+
 </body>
 </html>
