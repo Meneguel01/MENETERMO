@@ -1,139 +1,142 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Palavra do Dia</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #121213;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        height: 100vh;
-        margin: 0;
-        padding-top: 20px;
-    }
-    h1 {
-        margin-bottom: 20px;
-    }
-    #grid {
-        display: grid;
-        grid-template-columns: repeat(5, 60px);
-        grid-gap: 10px;
-        margin-bottom: 20px;
-    }
-    .cell {
-        width: 60px;
-        height: 60px;
-        border: 2px solid #3a3a3c;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        background: #121213;
-        color: white;
-    }
-    .correct {
-        background: #538d4e; /* verde */
-        border-color: #538d4e;
-    }
-    .present {
-        background: #b59f3b; /* laranja */
-        border-color: #b59f3b;
-    }
-    .absent {
-        background: #3a3a3c; /* cinza */
-        border-color: #3a3a3c;
-    }
-    input {
-        width: 150px;
-        padding: 10px;
-        font-size: 1.2rem;
-        text-transform: uppercase;
-        text-align: center;
-    }
-    button {
-        padding: 10px 20px;
-        font-size: 1rem;
-        margin-left: 10px;
-        cursor: pointer;
-    }
-    #mensagem {
-        margin-top: 20px;
-        font-size: 1.2rem;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Palavra do Dia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 60px);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            background-color: white;
+            text-transform: uppercase;
+        }
+
+        .cell.correct {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .cell.partial {
+            background-color: orange;
+            color: white;
+        }
+
+        .cell.wrong {
+            background-color: #ccc;
+            color: white;
+        }
+
+        input {
+            padding: 10px;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            width: 200px;
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
-<h1>Palavra do Dia</h1>
+    <h1>Palavra do Dia</h1>
+    <div class="grid" id="grid"></div>
 
-<div id="grid"></div>
+    <input type="text" id="guess" maxlength="5" placeholder="Digite a palavra">
+    <button onclick="checkGuess()">Tentar</button>
 
-<div>
-    <input type="text" id="entrada" maxlength="5" autofocus>
-    <button onclick="verificar()">Tentar</button>
-</div>
+    <script>
+        const palavras = [
+            "CASAL", "TRENO", "FLORE", "NAVIO", "PEDRA", "LIVRO", "PRATO",
+            "CARRO", "TERRA", "BOLSA", "PLANO", "RUGIR", "FESTA", "NORTE"
+        ];
 
-<div id="mensagem"></div>
-
-<script>
-    const palavras = ["CASAL", "JOGOS", "TREVO", "MOUSE", "LINHA", "CARRO", "BOLA", "PRAIA", "NAVIO"];
-    const data = new Date();
-    const indiceDia = Math.floor(data.getTime() / (1000 * 60 * 60 * 24)) % palavras.length;
-    const palavraDoDia = palavras[indiceDia];
-    
-    const tentativasMax = 6;
-    let tentativaAtual = 0;
-    let grid = document.getElementById("grid");
-
-    for (let i = 0; i < tentativasMax * 5; i++) {
-        let cell = document.createElement("div");
-        cell.classList.add("cell");
-        grid.appendChild(cell);
-    }
-
-    function verificar() {
-        let entrada = document.getElementById("entrada");
-        let palpite = entrada.value.toUpperCase();
-        if (palpite.length !== 5) {
-            alert("Digite uma palavra com 5 letras!");
-            return;
+        // Função para obter a palavra do dia
+        function getPalavraDoDia() {
+            const hoje = new Date();
+            const inicio = new Date(2025, 0, 1); // 1º Jan 2025
+            const diffDias = Math.floor((hoje - inicio) / (1000 * 60 * 60 * 24));
+            return palavras[diffDias % palavras.length];
         }
 
-        let startIndex = tentativaAtual * 5;
+        let palavraDoDia = getPalavraDoDia();
+        let tentativas = [];
 
-        for (let i = 0; i < 5; i++) {
-            let cell = grid.children[startIndex + i];
-            cell.textContent = palpite[i];
+        function atualizarGrid() {
+            const grid = document.getElementById("grid");
+            grid.innerHTML = "";
+            tentativas.forEach(tentativa => {
+                for (let i = 0; i < 5; i++) {
+                    const cell = document.createElement("div");
+                    cell.classList.add("cell");
+                    const letra = tentativa[i];
+                    cell.textContent = letra;
 
-            if (palpite[i] === palavraDoDia[i]) {
-                cell.classList.add("correct");
-            } else if (palavraDoDia.includes(palpite[i])) {
-                cell.classList.add("present");
-            } else {
-                cell.classList.add("absent");
+                    if (letra === palavraDoDia[i]) {
+                        cell.classList.add("correct");
+                    } else if (palavraDoDia.includes(letra)) {
+                        cell.classList.add("partial");
+                    } else {
+                        cell.classList.add("wrong");
+                    }
+                    grid.appendChild(cell);
+                }
+            });
+        }
+
+        function checkGuess() {
+            const guessInput = document.getElementById("guess");
+            const guess = guessInput.value.toUpperCase();
+
+            if (guess.length !== 5) {
+                alert("A palavra deve ter 5 letras!");
+                return;
             }
-        }
 
-        tentativaAtual++;
-        entrada.value = "";
+            tentativas.push(guess);
+            atualizarGrid();
 
-        if (palpite === palavraDoDia) {
-            document.getElementById("mensagem").textContent = "🎉 Você acertou!";
-            document.getElementById("entrada").disabled = true;
-        } else if (tentativaAtual >= tentativasMax) {
-            document.getElementById("mensagem").textContent = `❌ Fim de jogo! A palavra era ${palavraDoDia}`;
-            document.getElementById("entrada").disabled = true;
+            if (guess === palavraDoDia) {
+                setTimeout(() => alert("Parabéns! Você acertou a palavra do dia!"), 100);
+            }
+
+            guessInput.value = "";
         }
-    }
-</script>
+    </script>
 
 </body>
 </html>
